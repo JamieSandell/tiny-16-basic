@@ -1,12 +1,9 @@
 #include <windows.h>
 
-#define internal static
+#define internal_function static
 #define global static
 
 #define UNUSED_PARAMETER(P) P
-
-static const int failure = 0;
-static const int success = 1;
 
 struct window
 {
@@ -14,13 +11,16 @@ struct window
     HWND handle;
 };
 
+global const int failure = 1;
 global struct window main_window;
+global const int success = 0;
 
+internal_function
 LRESULT CALLBACK
-main_window_callback(HWND window_handle,
-                     UINT message,
-                     WPARAM w_param,
-                     LPARAM l_param)
+win32_main_window_callback(HWND window_handle,
+                           UINT message,
+                           WPARAM w_param,
+                           LPARAM l_param)
 {
     LRESULT result = 0;
     
@@ -70,7 +70,7 @@ WinMain
     if (!prev_instance)
     {
         window_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-        window_class.lpfnWndProc = main_window_callback;
+        window_class.lpfnWndProc = win32_main_window_callback;
         window_class.hInstance = instance;
         // window_class.hIcon; // TODO: Supply and icon
         window_class.lpszClassName = class_name;
