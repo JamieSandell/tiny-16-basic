@@ -5,5 +5,4 @@ misc/
 build/
 
 # Files
-*.bat
 *.4coder
