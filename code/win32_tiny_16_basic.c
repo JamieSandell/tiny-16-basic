@@ -1,5 +1,8 @@
 #include <windows.h>
 
+#define internal static
+#define global static
+
 #define UNUSED_PARAMETER(P) P
 
 static const int failure = 0;
@@ -10,6 +13,8 @@ struct window
     HINSTANCE instance;
     HWND handle;
 };
+
+global struct window main_window;
 
 LRESULT CALLBACK
 main_window_callback(HWND window_handle,
@@ -28,10 +33,12 @@ main_window_callback(HWND window_handle,
         
         case WM_CLOSE:
         {
+            DestroyWindow(main_window.handle);
         } break;
         
         case WM_DESTROY:
         {
+            PostQuitMessage(success);
         } break;
         
         case WM_SIZE:
@@ -47,7 +54,7 @@ main_window_callback(HWND window_handle,
     return result;
 }
 
-int CALLBACK
+int WINAPI
 WinMain
 (
  HINSTANCE instance,
@@ -58,7 +65,7 @@ WinMain
 {
     UNUSED_PARAMETER(command_line);
     WNDCLASSA window_class = {0};
-    const string class_name = "Tiny16BasicWindowClass";
+    const char class_name[] = "Tiny16BasicWindowClass";
     
     if (!prev_instance)
     {
@@ -72,28 +79,50 @@ WinMain
         {
             return failure;
         }
-        
-        HWND handle = CreateWindowA(
-                                    class_name,
-                                    "Tiny16Basic",
-                                    WS_OVERLAPPEDWINDOW,
-                                    CW_USEDEFAULT,
-                                    CW_USEDEFAULT,
-                                    CW_USEDEFAULT,
-                                    CW_USEDEFAULT,
-                                    NULL,
-                                    NULL,
-                                    NULL);
-        
-        if (handle == NULL)
-        {
-            // TODO: Logging
-            return failure;
-        }
-        
-        
     }
     
-    return success;
+    HWND handle = CreateWindowA(
+                                class_name,
+                                "Tiny16Basic",
+                                WS_OVERLAPPEDWINDOW,
+                                CW_USEDEFAULT,
+                                CW_USEDEFAULT,
+                                CW_USEDEFAULT,
+                                CW_USEDEFAULT,
+                                NULL,
+                                NULL,
+                                NULL,
+                                NULL);
+    
+    if (handle == NULL)
+    {
+        // TODO: Logging
+        return failure;
+    }
+    
+    main_window.instance = window_class.hInstance;
+    main_window.handle = handle;
+    
+    ShowWindow(main_window.handle, show_command);
+    UpdateWindow(main_window.handle);
+    
+    BOOL result;
+    MSG msg = {0};
+    
+    while ((result = GetMessage(&msg, main_window.handle, 0, 0)))
+    {
+        if (result == -1)
+        {
+            // TODO: handle error, exit?
+            break;
+        }
+        else
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
+    
+    return (int)msg.wParam;
 }
 
