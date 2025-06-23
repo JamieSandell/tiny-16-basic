@@ -1,9 +1,22 @@
+#include <stdint.h>
 #include <windows.h>
 
 #define internal_function static
 #define global static
 
+#define u8 uint8_t
+#define u32 uint32_t
+
 #define UNUSED_PARAMETER(P) P
+
+struct win32_back_buffer
+{
+    BITMAPINFO info;
+    void *memory;
+    int width;
+    int height;
+    int bytes_per_pixel;
+};
 
 struct window
 {
@@ -11,6 +24,8 @@ struct window
     HWND handle;
 };
 
+global struct win32_back_buffer back_buffer;
+global HDC bitmap_dc;
 global const int failure = 1;
 global struct window main_window;
 global const int success = 0;
@@ -43,6 +58,60 @@ win32_main_window_callback(HWND window_handle,
         
         case WM_SIZE:
         {
+            RECT client_rect;
+            if (!GetClientRect(main_window.handle, &client_rect))
+            {
+                // TODO: handle error, logging
+            }
+            else
+            {
+                void *back_buffer = VirtualAlloc(
+                                                 NULL,
+                                                 bytes_per_pixel * resolution_width * resolution_height,
+                                                 MEM_COMMIT | MEM_RESERVE,
+                                                 PAGE_READWRITE);
+                
+                if (back_buffer == NULL)
+                {
+                    // TODO: handle error, logging
+                    PostQuitMessage(failure);
+                }
+                
+                u32*start = (u32*)back_buffer;
+                u32*location;
+                u8* pixel;
+                
+                for (int y = 0; y < resolution_height; ++y)
+                {
+                    location = start + (y * resolution_height);
+                    for (int x = 0; x < resolution_width; ++x)
+                    {
+                        pixel = (u8*)location;
+                        *pixel++ = 0xFF; // BB
+                        *pixel++ = 0x00; // GG
+                        *pixel++ = 0x00; // RR
+                        *pixel = 0xFF; // A
+                    }
+                }
+                
+                HDC dc = GetDC(main_window.handle);
+                
+                if (dc == NULL)
+                {
+                    // TODO: handle error, logging
+                    PostQuitMessage(failure);
+                }
+                
+                if (!ReleaseDC(main_window.handle, dc))
+                {
+                    // TODO: handle error, logging
+                }
+                
+                if(!VirtualFree(back_buffer, 0, MEM_RELEASE))
+                {
+                    // TODO: handle error, logging
+                }
+            }
         } break;
         
         default:
@@ -105,6 +174,14 @@ WinMain
     
     ShowWindow(main_window.handle, show_command);
     UpdateWindow(main_window.handle);
+    
+    HDC device_context = GetDC(main_window.handle);
+    
+    if (device_context == NULL)
+    {
+        // TODO: Logging
+        PostQuitMessage(failure);
+    }
     
     BOOL result;
     MSG msg = {0};
