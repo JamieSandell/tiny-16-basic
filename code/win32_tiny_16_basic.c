@@ -9,7 +9,7 @@
 
 #define UNUSED_PARAMETER(P) P
 
-struct win32_back_buffer
+struct win32_offscreen_buffer
 {
     BITMAPINFO info;
     void *memory;
@@ -24,10 +24,12 @@ struct window
     HWND handle;
 };
 
-global struct win32_back_buffer back_buffer;
+global struct win32_offscreen_buffer global_back_buffer;
 global HDC bitmap_dc;
 global const int failure = 1;
 global struct window main_window;
+global const int resolution_height = 270;
+global const int resolution_width = 480;
 global const int success = 0;
 
 internal_function
@@ -56,6 +58,31 @@ win32_main_window_callback(HWND window_handle,
             PostQuitMessage(success);
         } break;
         
+        case WM_PAINT:
+        {
+            if (back_buffer)
+            {
+                if(!VirtualFree(back_buffer, 0, MEM_RELEASE))
+                {
+                    // TODO: handle error, logging
+                    PostQuitMessage(failure);
+                }
+            }
+            
+            HDC dc = GetDC(main_window.handle);
+            
+            if (dc == NULL)
+            {
+                // TODO: handle error, logging
+                PostQuitMessage(failure);
+            }
+            
+            if (!ReleaseDC(main_window.handle, dc))
+            {
+                // TODO: handle error, logging
+            }
+        } break;
+        
         case WM_SIZE:
         {
             RECT client_rect;
@@ -67,7 +94,7 @@ win32_main_window_callback(HWND window_handle,
             {
                 void *back_buffer = VirtualAlloc(
                                                  NULL,
-                                                 bytes_per_pixel * resolution_width * resolution_height,
+                                                 global_back_buffer.bytes_per_pixel * resolution_width * resolution_height,
                                                  MEM_COMMIT | MEM_RESERVE,
                                                  PAGE_READWRITE);
                 
@@ -92,24 +119,6 @@ win32_main_window_callback(HWND window_handle,
                         *pixel++ = 0x00; // RR
                         *pixel = 0xFF; // A
                     }
-                }
-                
-                HDC dc = GetDC(main_window.handle);
-                
-                if (dc == NULL)
-                {
-                    // TODO: handle error, logging
-                    PostQuitMessage(failure);
-                }
-                
-                if (!ReleaseDC(main_window.handle, dc))
-                {
-                    // TODO: handle error, logging
-                }
-                
-                if(!VirtualFree(back_buffer, 0, MEM_RELEASE))
-                {
-                    // TODO: handle error, logging
                 }
             }
         } break;
