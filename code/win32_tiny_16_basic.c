@@ -192,7 +192,9 @@ WinMain
         PostQuitMessage(failure);
     }
     
-    BOOL result;
+    global_back_buffer.
+        
+        BOOL result; // TODO: Don't use BOOL
     MSG msg = {0};
     
     while ((result = GetMessage(&msg, main_window.handle, 0, 0)))
