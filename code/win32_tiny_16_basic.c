@@ -60,15 +60,6 @@ win32_main_window_callback(HWND window_handle,
         
         case WM_PAINT:
         {
-            if (back_buffer)
-            {
-                if(!VirtualFree(back_buffer, 0, MEM_RELEASE))
-                {
-                    // TODO: handle error, logging
-                    PostQuitMessage(failure);
-                }
-            }
-            
             HDC dc = GetDC(main_window.handle);
             
             if (dc == NULL)
@@ -90,37 +81,6 @@ win32_main_window_callback(HWND window_handle,
             {
                 // TODO: handle error, logging
             }
-            else
-            {
-                void *back_buffer = VirtualAlloc(
-                                                 NULL,
-                                                 global_back_buffer.bytes_per_pixel * resolution_width * resolution_height,
-                                                 MEM_COMMIT | MEM_RESERVE,
-                                                 PAGE_READWRITE);
-                
-                if (back_buffer == NULL)
-                {
-                    // TODO: handle error, logging
-                    PostQuitMessage(failure);
-                }
-                
-                u32*start = (u32*)back_buffer;
-                u32*location;
-                u8* pixel;
-                
-                for (int y = 0; y < resolution_height; ++y)
-                {
-                    location = start + (y * resolution_height);
-                    for (int x = 0; x < resolution_width; ++x)
-                    {
-                        pixel = (u8*)location;
-                        *pixel++ = 0xFF; // BB
-                        *pixel++ = 0x00; // GG
-                        *pixel++ = 0x00; // RR
-                        *pixel = 0xFF; // A
-                    }
-                }
-            }
         } break;
         
         default:
@@ -141,6 +101,49 @@ WinMain
  int show_command
  )
 {
+    global_back_buffer.width = resolution_width;
+    global_back_buffer.height = resolution_height;
+    global_back_buffer.bytes_per_pixel = 4; // TODO: No magic numbers
+    
+    global_back_buffer.memory = VirtualAlloc(
+                                             NULL,
+                                             global_back_buffer.bytes_per_pixel * global_back_buffer.width * global_back_buffer.height,
+                                             MEM_COMMIT | MEM_RESERVE,
+                                             PAGE_READWRITE);
+    
+    if (global_back_buffer.memory == NULL)
+    {
+        // TODO: handle error, logging
+        PostQuitMessage(failure);
+    }
+    
+    global_back_buffer.info.bmiHeader.biSize = sizeof(global_back_buffer.info.bmiHeader.biSize);
+    global_back_buffer.info.bmiHeader.biWidth = global_back_buffer.width;
+    global_back_buffer.info.bmiHeader.biHeight = global_back_buffer.height;
+    global_back_buffer.info.bmiHeader.biPlanes = 1;
+    global_back_buffer.info.bmiHeader.biBitCount = (WORD)(global_back_buffer.bytes_per_pixel * 8); //TODO: No magic numbers
+    global_back_buffer.info.bmiHeader.biCompression = BI_RGB;
+    global_back_buffer.info.bmiHeader.biSizeImage = 0;
+    global_back_buffer.info.bmiHeader.biClrUsed = 0;
+    global_back_buffer.info.bmiHeader.biClrImportant = 0;
+    
+    u32*start = (u32*)global_back_buffer.memory;
+    u32*location;
+    u8* pixel;
+    
+    for (int y = 0; y < resolution_height; ++y)
+    {
+        location = start + (y * resolution_height);
+        for (int x = 0; x < resolution_width; ++x)
+        {
+            pixel = (u8*)location;
+            *pixel++ = 0xFF; // BB
+            *pixel++ = 0x00; // GG
+            *pixel++ = 0x00; // RR
+            *pixel = 0xFF; // A
+        }
+    }
+    
     UNUSED_PARAMETER(command_line);
     WNDCLASSA window_class = {0};
     const char class_name[] = "Tiny16BasicWindowClass";
@@ -192,9 +195,9 @@ WinMain
         PostQuitMessage(failure);
     }
     
-    global_back_buffer.
-        
-        BOOL result; // TODO: Don't use BOOL
+    
+    
+    BOOL result; // TODO: Don't use BOOL
     MSG msg = {0};
     
     while ((result = GetMessage(&msg, main_window.handle, 0, 0)))
