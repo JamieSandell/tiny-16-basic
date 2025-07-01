@@ -33,6 +33,52 @@ global const int resolution_width = 480;
 global const int success = 0;
 
 internal_function
+void
+win32_render_back_buffer(void)
+{
+    HDC device_context = GetDC(main_window.handle);
+    
+    if (device_context == NULL)
+    {
+        // TODO: Logging
+        PostQuitMessage(failure);
+    }
+    
+    RECT rect;
+    if (!GetClientRect(main_window.handle, &rect))
+    {
+        //TODO: Logging
+        PostQuitMessage(GetLastError());
+    }
+    
+    if(!StretchDIBits(
+                      device_context,
+                      rect.left,
+                      rect.top,
+                      rect.right - rect.left,
+                      rect.bottom - rect.top,
+                      0,
+                      0,
+                      global_back_buffer.width,
+                      global_back_buffer.height,
+                      global_back_buffer.memory,
+                      &global_back_buffer.info,
+                      DIB_RGB_COLORS,
+                      SRCCOPY
+                      ))
+    {
+        // TODO: Logging
+        PostQuitMessage(GetLastError());
+    }
+    
+    if(!ReleaseDC(main_window.handle, device_context))
+    {
+        // TODO: Logging
+        PostQuitMessage(failure);
+    }
+}
+
+internal_function
 LRESULT CALLBACK
 win32_main_window_callback(HWND window_handle,
                            UINT message,
@@ -60,27 +106,7 @@ win32_main_window_callback(HWND window_handle,
         
         case WM_PAINT:
         {
-            HDC dc = GetDC(main_window.handle);
-            
-            if (dc == NULL)
-            {
-                // TODO: handle error, logging
-                PostQuitMessage(failure);
-            }
-            
-            if (!ReleaseDC(main_window.handle, dc))
-            {
-                // TODO: handle error, logging
-            }
-        } break;
-        
-        case WM_SIZE:
-        {
-            RECT client_rect;
-            if (!GetClientRect(main_window.handle, &client_rect))
-            {
-                // TODO: handle error, logging
-            }
+            win32_render_back_buffer();
         } break;
         
         default:
@@ -117,15 +143,12 @@ WinMain
         PostQuitMessage(failure);
     }
     
-    global_back_buffer.info.bmiHeader.biSize = sizeof(global_back_buffer.info.bmiHeader.biSize);
+    global_back_buffer.info.bmiHeader.biSize = sizeof(global_back_buffer.info.bmiHeader);
     global_back_buffer.info.bmiHeader.biWidth = global_back_buffer.width;
     global_back_buffer.info.bmiHeader.biHeight = global_back_buffer.height;
     global_back_buffer.info.bmiHeader.biPlanes = 1;
     global_back_buffer.info.bmiHeader.biBitCount = (WORD)(global_back_buffer.bytes_per_pixel * 8); //TODO: No magic numbers
     global_back_buffer.info.bmiHeader.biCompression = BI_RGB;
-    global_back_buffer.info.bmiHeader.biSizeImage = 0;
-    global_back_buffer.info.bmiHeader.biClrUsed = 0;
-    global_back_buffer.info.bmiHeader.biClrImportant = 0;
     
     u32*start = (u32*)global_back_buffer.memory;
     u32*location;
@@ -133,9 +156,9 @@ WinMain
     
     for (int y = 0; y < resolution_height; ++y)
     {
-        location = start + (y * resolution_height);
         for (int x = 0; x < resolution_width; ++x)
         {
+            location = start + (y * resolution_width) + x;
             pixel = (u8*)location;
             *pixel++ = 0xFF; // BB
             *pixel++ = 0x00; // GG
@@ -183,19 +206,9 @@ WinMain
     
     main_window.instance = window_class.hInstance;
     main_window.handle = handle;
-    
     ShowWindow(main_window.handle, show_command);
     UpdateWindow(main_window.handle);
-    
-    HDC device_context = GetDC(main_window.handle);
-    
-    if (device_context == NULL)
-    {
-        // TODO: Logging
-        PostQuitMessage(failure);
-    }
-    
-    
+    win32_render_back_buffer();
     
     BOOL result; // TODO: Don't use BOOL
     MSG msg = {0};
