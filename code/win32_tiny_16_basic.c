@@ -25,7 +25,6 @@ struct window
 };
 
 global struct win32_offscreen_buffer global_back_buffer;
-global HDC bitmap_dc;
 global const int failure = 1;
 global struct window main_window;
 global const int resolution_height = 270;
@@ -34,89 +33,14 @@ global const int success = 0;
 
 internal_function
 void
-win32_render_back_buffer(void)
-{
-    HDC device_context = GetDC(main_window.handle);
-    
-    if (device_context == NULL)
-    {
-        // TODO: Logging
-        PostQuitMessage(failure);
-    }
-    
-    RECT rect;
-    if (!GetClientRect(main_window.handle, &rect))
-    {
-        //TODO: Logging
-        PostQuitMessage(GetLastError());
-    }
-    
-    if(!StretchDIBits(
-                      device_context,
-                      rect.left,
-                      rect.top,
-                      rect.right - rect.left,
-                      rect.bottom - rect.top,
-                      0,
-                      0,
-                      global_back_buffer.width,
-                      global_back_buffer.height,
-                      global_back_buffer.memory,
-                      &global_back_buffer.info,
-                      DIB_RGB_COLORS,
-                      SRCCOPY
-                      ))
-    {
-        // TODO: Logging
-        PostQuitMessage(GetLastError());
-    }
-    
-    if(!ReleaseDC(main_window.handle, device_context))
-    {
-        // TODO: Logging
-        PostQuitMessage(failure);
-    }
-}
+win32_render_back_buffer(void);
 
 internal_function
 LRESULT CALLBACK
 win32_main_window_callback(HWND window_handle,
                            UINT message,
                            WPARAM w_param,
-                           LPARAM l_param)
-{
-    LRESULT result = 0;
-    
-    switch (message)
-    {
-        case WM_ACTIVATEAPP:
-        {
-            
-        } break;
-        
-        case WM_CLOSE:
-        {
-            DestroyWindow(main_window.handle);
-        } break;
-        
-        case WM_DESTROY:
-        {
-            PostQuitMessage(success);
-        } break;
-        
-        case WM_PAINT:
-        {
-            win32_render_back_buffer();
-        } break;
-        
-        default:
-        {
-            result = DefWindowProc(window_handle, message, w_param, l_param);
-        } break;
-    }
-    
-    return result;
-}
+                           LPARAM l_param);
 
 int WINAPI
 WinMain
@@ -228,5 +152,91 @@ WinMain
     }
     
     return (int)msg.wParam;
+}
+
+internal_function
+LRESULT CALLBACK
+win32_main_window_callback(HWND window_handle,
+                           UINT message,
+                           WPARAM w_param,
+                           LPARAM l_param)
+{
+    LRESULT result = 0;
+    
+    switch (message)
+    {
+        case WM_ACTIVATEAPP:
+        {
+            
+        } break;
+        
+        case WM_CLOSE:
+        {
+            DestroyWindow(main_window.handle);
+        } break;
+        
+        case WM_DESTROY:
+        {
+            PostQuitMessage(success);
+        } break;
+        
+        case WM_PAINT:
+        {
+            win32_render_back_buffer();
+        } break;
+        
+        default:
+        {
+            result = DefWindowProc(window_handle, message, w_param, l_param);
+        } break;
+    }
+    
+    return result;
+}
+
+internal_function
+void
+win32_render_back_buffer(void)
+{
+    HDC device_context = GetDC(main_window.handle);
+    
+    if (device_context == NULL)
+    {
+        // TODO: Logging
+        PostQuitMessage(failure);
+    }
+    
+    RECT rect;
+    if (!GetClientRect(main_window.handle, &rect))
+    {
+        //TODO: Logging
+        PostQuitMessage(GetLastError());
+    }
+    
+    if(!StretchDIBits(
+                      device_context,
+                      rect.left,
+                      rect.top,
+                      rect.right - rect.left,
+                      rect.bottom - rect.top,
+                      0,
+                      0,
+                      global_back_buffer.width,
+                      global_back_buffer.height,
+                      global_back_buffer.memory,
+                      &global_back_buffer.info,
+                      DIB_RGB_COLORS,
+                      SRCCOPY
+                      ))
+    {
+        // TODO: Logging
+        PostQuitMessage(GetLastError());
+    }
+    
+    if(!ReleaseDC(main_window.handle, device_context))
+    {
+        // TODO: Logging
+        PostQuitMessage(failure);
+    }
 }
 
