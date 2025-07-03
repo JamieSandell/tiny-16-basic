@@ -30,6 +30,7 @@ global struct window main_window;
 global const int resolution_height = 270;
 global const int resolution_width = 480;
 global const int success = 0;
+global void *test_bitmap;
 
 internal_function
 void
@@ -132,6 +133,42 @@ WinMain
     main_window.handle = handle;
     ShowWindow(main_window.handle, show_command);
     UpdateWindow(main_window.handle);
+    
+    HANDLE file_handle = CreateFileA(
+                                     "../assets/basic.bmp",
+                                     GENERIC_READ,
+                                     FILE_SHARE_READ,
+                                     NULL,
+                                     OPEN_EXISTING,
+                                     FILE_ATTRIBUTE_NORMAL,
+                                     NULL);
+    
+    if (file_handle == NULL)
+    {
+        GetLastError();
+    }
+    
+    BITMAPFILEHEADER bmp_file_header = {0};
+    void *bmp_file_header_buffer = VirtualAlloc(
+                                                NULL,
+                                                14,
+                                                MEM_COMMIT | MEM_RESERVE,
+                                                PAGE_READWRITE);
+    unsigned long bytes_read = 0;
+    if (!ReadFile(
+                  file_handle,
+                  bmp_file_header_buffer,
+                  14,
+                  &bytes_read,
+                  NULL))
+    {
+        GetLastError();
+    }
+    else
+    {
+        bmp_file_header.
+    }
+    
     win32_render_back_buffer();
     
     BOOL result; // TODO: Don't use BOOL
