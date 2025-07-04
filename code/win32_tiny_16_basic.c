@@ -5,6 +5,7 @@
 #define global static
 
 #define u8 uint8_t
+#define u16 uint16_t
 #define u32 uint32_t
 
 #define UNUSED_PARAMETER(P) P
@@ -149,25 +150,51 @@ WinMain
     }
     
     BITMAPFILEHEADER bmp_file_header = {0};
-    void *bmp_file_header_buffer = VirtualAlloc(
-                                                NULL,
-                                                14,
-                                                MEM_COMMIT | MEM_RESERVE,
-                                                PAGE_READWRITE);
+    void *bmp_file_header_ptr =  &(bmp_file_header.bfType);
     unsigned long bytes_read = 0;
-    if (!ReadFile(
-                  file_handle,
-                  bmp_file_header_buffer,
-                  14,
-                  &bytes_read,
-                  NULL))
-    {
-        GetLastError();
-    }
-    else
-    {
-        bmp_file_header.
-    }
+    ReadFile(
+             file_handle,
+             bmp_file_header_ptr,
+             sizeof(u16),
+             &bytes_read,
+             NULL
+             );
+    
+    bmp_file_header_ptr = &(bmp_file_header.bfSize);
+    ReadFile(
+             file_handle,
+             bmp_file_header_ptr,
+             sizeof(u32),
+             &bytes_read,
+             NULL
+             );
+    
+    bmp_file_header_ptr = &(bmp_file_header.bfReserved1);
+    ReadFile(
+             file_handle,
+             bmp_file_header_ptr,
+             sizeof(u16),
+             &bytes_read,
+             NULL
+             );
+    
+    bmp_file_header_ptr = &(bmp_file_header.bfReserved2);
+    ReadFile(
+             file_handle,
+             bmp_file_header_ptr,
+             sizeof(u16),
+             &bytes_read,
+             NULL
+             );
+    
+    bmp_file_header_ptr = &(bmp_file_header.bfOffBits);
+    ReadFile(
+             file_handle,
+             bmp_file_header_ptr,
+             sizeof(u32),
+             &bytes_read,
+             NULL;
+             );
     
     win32_render_back_buffer();
     
