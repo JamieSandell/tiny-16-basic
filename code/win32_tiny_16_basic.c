@@ -187,45 +187,37 @@ WinMain
                                  NULL,
                                  FILE_CURRENT);
     
-    void *game_bmp_member = &test_bmp.
-        
-        
-        
-        bmp_file_header_ptr = &(bmp_file_header.bfSize);
     ReadFile(
              file_handle,
-             bmp_file_header_ptr,
-             sizeof(u32),
+             &test_bmp.width,
+             sizeof(test_bmp.width),
              &bytes_read,
-             NULL
-             );
+             NULL);
     
-    bmp_file_header_ptr = &(bmp_file_header.bfReserved1);
     ReadFile(
              file_handle,
-             bmp_file_header_ptr,
-             sizeof(u16),
+             &test_bmp.height,
+             sizeof(test_bmp.height),
              &bytes_read,
-             NULL
-             );
+             NULL);
     
-    bmp_file_header_ptr = &(bmp_file_header.bfReserved2);
-    ReadFile(
-             file_handle,
-             bmp_file_header_ptr,
-             sizeof(u16),
-             &bytes_read,
-             NULL
-             );
+    u32 bmp_image_size;
     
-    bmp_file_header_ptr = &(bmp_file_header.bfOffBits);
+    seek_result = SetFilePointer(
+                                 file_handle,
+                                 34,
+                                 NULL,
+                                 FILE_BEGIN
+                                 );
+    
     ReadFile(
              file_handle,
-             bmp_file_header_ptr,
-             sizeof(u32),
+             &bmp_image_size,
+             sizeof(bmp_image_size),
              &bytes_read,
-             NULL
-             );
+             NULL);
+    
+    CloseHandle(file_handle);
     
     win32_render_back_buffer();
     
