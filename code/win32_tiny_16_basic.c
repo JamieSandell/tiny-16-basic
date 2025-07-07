@@ -10,6 +10,15 @@
 
 #define UNUSED_PARAMETER(P) P
 
+struct game_bitmap
+{
+    BITMAPINFO info;
+    void *memory;
+    int width;
+    int height;
+    int bytes_per_pixel;
+};
+
 struct win32_offscreen_buffer
 {
     BITMAPINFO info;
@@ -31,7 +40,7 @@ global struct window main_window;
 global const int resolution_height = 270;
 global const int resolution_width = 480;
 global const int success = 0;
-global void *test_bitmap;
+global struct game_bitmap test_bmp;
 
 internal_function
 void
@@ -149,18 +158,40 @@ WinMain
         GetLastError();
     }
     
-    BITMAPFILEHEADER bmp_file_header = {0};
-    void *bmp_file_header_ptr =  &(bmp_file_header.bfType);
+    test_bmp.info.bmiHeader.biSize = sizeof(test_bmp.info.bmiHeader);
+    test_bmp.info.bmiHeader.biWidth = test_bmp.width;
+    test_bmp.info.bmiHeader.biHeight = test_bmp.height;
+    test_bmp.info.bmiHeader.biPlanes = 1;
+    test_bmp.info.bmiHeader.biBitCount = (WORD)(test_bmp.bytes_per_pixel * 8); //TODO: No magic numbers
+    test_bmp.info.bmiHeader.biCompression = BI_RGB;
+    
+    u32 bmp_offset = 0;
+    u32 seek_result = SetFilePointer(
+                                     file_handle,
+                                     10,
+                                     NULL,
+                                     FILE_BEGIN);
+    
     unsigned long bytes_read = 0;
     ReadFile(
              file_handle,
-             bmp_file_header_ptr,
-             sizeof(u16),
+             &bmp_offset,
+             sizeof(bmp_offset),
              &bytes_read,
              NULL
              );
     
-    bmp_file_header_ptr = &(bmp_file_header.bfSize);
+    seek_result = SetFilePointer(
+                                 file_handle,
+                                 sizeof(u32),
+                                 NULL,
+                                 FILE_CURRENT);
+    
+    void *game_bmp_member = &test_bmp.
+        
+        
+        
+        bmp_file_header_ptr = &(bmp_file_header.bfSize);
     ReadFile(
              file_handle,
              bmp_file_header_ptr,
@@ -193,7 +224,7 @@ WinMain
              bmp_file_header_ptr,
              sizeof(u32),
              &bytes_read,
-             NULL;
+             NULL
              );
     
     win32_render_back_buffer();
