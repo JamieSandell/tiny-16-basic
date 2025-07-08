@@ -217,6 +217,35 @@ WinMain
              &bytes_read,
              NULL);
     
+    void *bmp_memory = VirtualAlloc(
+                                    NULL,
+                                    bmp_image_size,
+                                    MEM_COMMIT | MEM_RESERVE,
+                                    PAGE_READWRITE);
+    
+    if (bmp_memory == NULL)
+    {
+        PostQuitMessage(GetLastError());
+    }
+    
+    seek_result = SetFilePointer(
+                                 file_handle,
+                                 28,
+                                 NULL,
+                                 FILE_CURRENT);
+    
+    ReadFile(
+             file_handle,
+             bmp_memory,
+             bmp_image_size,
+             &bytes_read,
+             NULL
+             );
+    
+    test_bmp.memory = bmp_memory;
+    
+    memcpy(global_back_buffer.memory, test_bmp.memory, bytes_read);
+    
     CloseHandle(file_handle);
     
     win32_render_back_buffer();
